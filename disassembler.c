@@ -12,7 +12,7 @@ void disassemble(char *inputBinary, int inputSize, char **output, int *outputSiz
     int instLen;
     for (int i = 0; i < inputSize; i += 4) {
         switch (inputBinary[i]) {
-            //nop
+            // nop
             case 0x00: 
                 sprintf(instruction, "nop\n");
                 break;
