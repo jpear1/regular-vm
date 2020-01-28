@@ -36,6 +36,50 @@ void disassemble(char *inputBinary, int inputSize, char **output, int *outputSiz
             case 0x05:
                 sprintf(instruction, "xor r%d r%d r%d\n", inputBinary[i+1], inputBinary[i+2], inputBinary[i+3]);
                 break;
+            // not rA rB
+            case 0x06:
+                sprintf(instruction, "not r%d r%d\n", inputBinary[i+1], inputBinary[i+2]);
+                break;
+            // lsh rA rB rC
+            case 0x07:
+                sprintf(instruction, "lsh r%d r%d r%d\n", inputBinary[i+1], inputBinary[i+2], inputBinary[i+3]);
+                break;
+            // ash rA rB rC
+            case 0x08:
+                sprintf(instruction, "ash r%d r%d r%d\n", inputBinary[i+1], inputBinary[i+2], inputBinary[i+3]);
+                break;
+            // tcu rA rB rC
+            case 0x09:
+                sprintf(instruction, "tcu r%d r%d r%d\n", inputBinary[i+1], inputBinary[i+2], inputBinary[i+3]);
+                break;
+            // tcs rA rB rC
+            case 0x0A:
+                sprintf(instruction, "tcs r%d r%d r%d\n", inputBinary[i+1], inputBinary[i+2], inputBinary[i+3]);
+                break;
+            // set rA imm
+            case 0x0B:
+                sprintf(instruction, "set r%d %d\n", inputBinary[i+1], inputBinary[i+2]);
+                break;
+            // mov rA rB
+            case 0x0C:
+                sprintf(instruction, "mov r%d r%d\n", inputBinary[i+1], inputBinary[i+2]);
+                break;
+            // ldw rA rB
+            case 0x0D:
+                sprintf(instruction, "ldw r%d r%d\n", inputBinary[i+1], inputBinary[i+2]);
+                break;
+            // stw rA rB
+            case 0x0E:
+                sprintf(instruction, "stw r%d r%d\n", inputBinary[i+1], inputBinary[i+2]);
+                break;
+            // ldb rA rB
+            case 0x0F:
+                sprintf(instruction, "ldb r%d r%d\n", inputBinary[i+1], inputBinary[i+2]);
+                break;
+            // stb rA rB
+            case 0x10:
+                sprintf(instruction, "stb r%d r%d\n", inputBinary[i+1], inputBinary[i+2]);
+                break;
         }
         instLen = strlen(instruction);
         strncpy(result+rIndex, instruction, instLen); // use strncopy to avoid copying the null byte on the end of instruction
