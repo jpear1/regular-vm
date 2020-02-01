@@ -4,7 +4,7 @@
 #include <assert.h>
 #include "disassembler.h"
 
-void disassemble(char *inputBinary, int inputSize, char **output, int *outputSize) {
+void disassemble(char const *inputBinary, int inputSize, char **output, int *outputSize) {
     assert(inputSize % 4 == 0);
     char *result = malloc(LONGEST_INSTRUCTION_LENGTH * inputSize/4 + 1);
     int rIndex = 0;
