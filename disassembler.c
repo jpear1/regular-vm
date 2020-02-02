@@ -4,7 +4,25 @@
 #include <assert.h>
 #include "disassembler.h"
 
-void disassemble(char const *inputBinary, int inputSize, char **output, int *outputSize) {
+void disassembleFile(char const *inFileName, char const *outFileName) {
+    FILE* inFile = fopen(inFileName, "r");
+    FILE* outFile = fopen(outFileName, "w+");
+    char inputBinary[100000];
+    int i = 0;
+    while (!feof(inFile)) {
+        fread(&inputBinary[i], 1, 1, inFile);
+        i++;
+    }
+    char *outputString;
+    int outputSize;
+    disassembleString(inputBinary, i, &outputString, &outputSize);
+    fwrite(outputString, 1, outputSize, outFile);
+    free(outputString); // allocated in dissassembleString
+    fclose(inFile);
+    fclose(outFile);
+}
+
+void disassembleString(char const *inputBinary, int inputSize, char **output, int *outputSize) {
     assert(inputSize % 4 == 0);
     char *result = malloc(LONGEST_INSTRUCTION_LENGTH * inputSize/4 + 1);
     int rIndex = 0;
