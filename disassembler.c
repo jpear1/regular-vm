@@ -2,17 +2,19 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <inttypes.h>
 #include "disassembler.h"
 
 void disassembleFile(char const *inFileName, char const *outFileName) {
     FILE* inFile = fopen(inFileName, "r");
     FILE* outFile = fopen(outFileName, "w+");
-    char inputBinary[100000];
+    char inputBinary[1000];
     int i = 0;
     while (!feof(inFile)) {
         fread(&inputBinary[i], 1, 1, inFile);
         i++;
     }
+    i--; // to remove EOF from array
     char *outputString;
     int outputSize;
     disassembleString(inputBinary, i, &outputString, &outputSize);
@@ -28,6 +30,7 @@ void disassembleString(char const *inputBinary, int inputSize, char **output, in
     int rIndex = 0;
     char instruction[LONGEST_INSTRUCTION_LENGTH + 1]; // +1 for the null byte sprintf will insert
     int instLen;
+    int16_t imm;
     for (int i = 0; i < inputSize; i += 4) {
         switch (inputBinary[i]) {
             // nop
@@ -76,7 +79,9 @@ void disassembleString(char const *inputBinary, int inputSize, char **output, in
                 break;
             // set rA imm
             case 0x0B:
-                sprintf(instruction, "set r%d %d\n", inputBinary[i+1], inputBinary[i+2]);
+                *(char*)(&imm) = inputBinary[i+2]; // set lsb of imm to inputBinary[i+2]
+                *((char*)(&imm)+1) = inputBinary[i+3]; // set lsb of imm to inputBinary[i+3]
+                sprintf(instruction, "set r%d %d\n", inputBinary[i+1], imm);
                 break;
             // mov rA rB
             case 0x0C:
