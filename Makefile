@@ -3,13 +3,13 @@ CFLAGS= -g -fsanitize=address -fsanitize=undefined
 
 BINARIES=asmDisasmTest interactiveCalc emulator
 
-tests: runAsmDisasmTest
+tests: runAsmDisasmTest emulatorTest
 
 runAsmDisasmTest: asmDisasmTest
 	./asmDisasmTest
 
-emulatorTest: emulator
-	./emulator test.reg
+emulatorTest: emulator runAsmDisasmTest
+	./emulator test.out
 
 
 asmDisasmTest: asmDisasmTest.c assembler.c disassembler.c
