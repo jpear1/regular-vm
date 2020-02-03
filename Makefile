@@ -1,10 +1,16 @@
 CC=gcc
 CFLAGS= -g -fsanitize=address -fsanitize=undefined 
 
-BINARIES=asmDisasmTest interactiveCalc 
+BINARIES=asmDisasmTest interactiveCalc emulator
 
-tests: asmDisasmTest
+tests: runAsmDisasmTest
+
+runAsmDisasmTest: asmDisasmTest
 	./asmDisasmTest
+
+emulatorTest: emulator
+	./emulator test.reg
+
 
 asmDisasmTest: asmDisasmTest.c assembler.c disassembler.c
 	$(CC) $(CFLAGS) -o $@ $^ 
