@@ -6,4 +6,4 @@ set r4 84
 sub r3 r3 r4
 set r10 10000
 stb r10 r4
-nop
+ldb r11 r10
