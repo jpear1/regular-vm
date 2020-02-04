@@ -16,6 +16,7 @@ int main(int argc, char **argv) {
     if (argc == 2) {
         strcpy(outFileName, inFileName);
         char *period = strchr(outFileName, '.');
+        strcpy(period+1, "out");
         if (period == NULL) {
             strcpy(outFileName, "ass.out");
         } else {
