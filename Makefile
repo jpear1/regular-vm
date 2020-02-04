@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS= -g -fsanitize=address -fsanitize=undefined 
 
-BINARIES=asmDisasmTest interactiveCalc emulator
+BINARIES=asmDisasmTest interactiveCalc emulator ass
 
 default: runAsmDisasmTest emulator
 
@@ -15,6 +15,9 @@ asmDisasmTest: asmDisasmTest.c assembler.c disassembler.c
 	$(CC) $(CFLAGS) -o $@ $^ 
 
 emulator: emulator.c
+	$(CC) $(CFLAGS) -o $@ $^ 
+
+ass: assembler.c
 	$(CC) $(CFLAGS) -o $@ $^ 
 
 # THIS WILL NOT COMPILE WITH $(CFLAGS) BECAUSE IT IS BAD
