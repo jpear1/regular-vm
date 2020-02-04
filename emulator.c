@@ -87,7 +87,9 @@ int runFile(char const *fileName) {
                 break;
             // set rA imm
             case 0x0B:
-                registers[b1] = *(int16_t*)(&b2);
+                memcpy(&registers[b1], &b2, 1);
+                memcpy(((char*)&registers[b1])+1, &b3, 1);
+                memset(((char*)&registers[b1])+2, b3 >= 0? 0x00 : 0xff, 2);
                 break;
             // mov rA rB
             case 0x0C:
@@ -95,23 +97,26 @@ int runFile(char const *fileName) {
                 break;
             // ldw rA rB
             case 0x0D:
-                registers[b1] = *(uint32_t*)(&memory[b2]);
+                memcpy(&registers[b1], &memory[b2], 4);
                 break;
             // stw rA rB
             case 0x0E:
-                *(uint32_t*)(&memory[b1]) = registers[b2];
+                memcpy(&memory[b1], &registers[b2], 4);
                 break;
             // ldb rA rB
             case 0x0F:
-                *((char*)(&registers[b1]) + 3) = memory[b2];
+                memcpy(&registers[b1], &memory[b2], 1);
                 break;
             // stb rA rB
             case 0x10:
-                memory[b1] = *((char*)(&registers[b2]) + 3);
+                memcpy(&memory[b1], &registers[b2], 1);
                 break;
         }
         printState();
         fread(instruction, 4, 1, inFile);
+        b1 = instruction[1];
+        b2 = instruction[2];
+        b3 = instruction[3];
     }
 }
 
