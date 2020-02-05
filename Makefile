@@ -5,10 +5,9 @@ BINARIES= interactiveCalc emulator ass dsm
 
 all: dsm ass emulator
 
-tests: all
+test: all
 	./ass test.reg
 	./dsm test.out
-	./emulator test.out
 
 emulator: emulator.c
 	$(CC) $(CFLAGS) -o $@ $^

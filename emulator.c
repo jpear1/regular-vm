@@ -6,6 +6,8 @@
 
 #include "emulator.h"
 
+#define PC registers[0]
+
 uint32_t registers[32] = {0};
 
 char memory[16384] = {0};
@@ -18,20 +20,17 @@ int main(int argc, char **argv) {
     return runFile(argv[1]);
 }
 
-int runFile(char const *fileName) {
-    FILE *inFile = fopen(fileName, "r");
-    if (inFile == NULL) {
-        fprintf(stderr, "Invalid input file : %s", fileName);
-        exit(-1);
-    }
-    char instruction[4];
-    fread(instruction, 4, 1, inFile);
-    char b1 = instruction[1];
-    char b2 = instruction[2];
-    char b3 = instruction[3];
+// returns 1-indexed line number of invalid instruction if invalid opcode
+int runBinary(const char *instructions, size_t size) {
+    PC = 0;
+    char op, b1, b2, b3;
     uint32_t tmp;
-    while (!feof(inFile)) {
-        switch (instruction[0]) {
+    while (PC < size) {
+        op = instructions[PC];
+        b1 = instructions[PC+1];
+        b2 = instructions[PC+2];
+        b3 = instructions[PC+3];
+        switch (op) {
             // nop
             case 0x00: 
                 break;
@@ -111,16 +110,34 @@ int runFile(char const *fileName) {
             case 0x10:
                 memcpy(&memory[b1], &registers[b2], 1);
                 break;
+            default:
+                return PC/4+1;
         }
         printState();
-        fread(instruction, 4, 1, inFile);
-        b1 = instruction[1];
-        b2 = instruction[2];
-        b3 = instruction[3];
+        PC += 4;
     }
+    return 0;
+}
+
+int runFile(char const *fileName) {
+    FILE *inFile = fopen(fileName, "r");
+    if (inFile == NULL) {
+        fprintf(stderr, "Invalid input file : %s", fileName);
+        exit(-1);
+    }
+    fseek(inFile, 0, SEEK_END);
+    size_t fileSize = ftell(inFile);
+    fseek(inFile, 0, SEEK_SET);
+    char *fileContents = malloc(fileSize);
+    fread(fileContents, 1, fileSize, inFile);
+    fclose(inFile);
+    int r = runBinary(fileContents, fileSize);
+    free(fileContents);
+    return r;
 }
 
 void printState() {
+    // TODO print out last instruction executed. Will have to restructure disassembler a bit.
     printf("----------------------------CURRENT STATE--------------------------\n");
     char valueString[50];
     const char spaces[] = "                ";
