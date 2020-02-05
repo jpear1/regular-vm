@@ -1,23 +1,16 @@
 CC=gcc
 CFLAGS= -g -fsanitize=address -fsanitize=undefined 
 
-BINARIES=asmDisasmTest interactiveCalc emulator ass
+BINARIES= interactiveCalc emulator ass dsm
 
-default: runAsmDisasmTest emulator
+all: dsm ass emulator
 
-runAsmDisasmTest: asmDisasmTest
-	./asmDisasmTest
-
-emulatorTest: emulator runAsmDisasmTest
+tests: all
+	./ass test.reg
+	./dsm test.out
 	./emulator test.out
 
-asmDisasmTest: asmDisasmTest.c assembler.c disassembler.c
-	$(CC) $(CFLAGS) -o $@ $^
-
 emulator: emulator.c
-	$(CC) $(CFLAGS) -o $@ $^
-
-ass: assembler.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 dsm: disassembler.c
