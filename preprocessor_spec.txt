@@ -1,0 +1,3 @@
+
+set32: sets a register to a 32 bit number
+
