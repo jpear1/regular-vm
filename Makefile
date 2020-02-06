@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS= -g -fsanitize=address -fsanitize=undefined 
 
-BINARIES= interactiveCalc emu ass dsm
+BINARIES= interactiveCalc emu ass dsm rpp
 
 all: dsm ass emulator
 
