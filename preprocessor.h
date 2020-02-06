@@ -1,4 +1,4 @@
-#include <stdarg.h>
+#include <stdio.h>
 
 int preprocessRegFile(char const *inFileName, char const *outFileName);
 

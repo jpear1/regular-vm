@@ -16,11 +16,14 @@ dsm: dsm.c disassembler.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 ass: ass.c assembler.c shared.c
-	$(CC) $(CFLAGS) -o $@ $^ 
+	$(CC) $(CFLAGS) -o $@ $^
+
+rpp: rpp.c preprocessor.c
+	$(CC) $(CFLAGS) -o $@ $^
 
 # THIS WILL NOT COMPILE WITH $(CFLAGS) BECAUSE IT IS BAD
 interactiveCalc: interactiveCalc.c calc.c utility.c intStack.c stringStack.c
-	$(CC) -o $@ $^ 
+	$(CC) -o $@ $^
 
 clean:
 	rm $(BINARIES)
