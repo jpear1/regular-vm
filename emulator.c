@@ -12,14 +12,6 @@ uint32_t registers[32] = {0};
 
 char memory[16384] = {0};
 
-int main(int argc, char **argv) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: ./emulator <binary>");
-        exit(-1);
-    }
-    return runFile(argv[1]);
-}
-
 // returns 1-indexed line number of invalid instruction if invalid opcode
 int runBinary(const char *instructions, size_t size) {
     PC = 0;

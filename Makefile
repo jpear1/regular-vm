@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS= -g -fsanitize=address -fsanitize=undefined 
 
-BINARIES= interactiveCalc emulator ass dsm
+BINARIES= interactiveCalc emu ass dsm
 
 all: dsm ass emulator
 
@@ -9,13 +9,13 @@ test: all
 	./ass test.reg
 	./dsm test.out
 
-emulator: emulator.c
+emu: emu.c emulator.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-dsm: disassembler.c
+dsm: dsm.c disassembler.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-ass: assembler.c
+ass: ass.c assembler.c
 	$(CC) $(CFLAGS) -o $@ $^ 
 
 # THIS WILL NOT COMPILE WITH $(CFLAGS) BECAUSE IT IS BAD
