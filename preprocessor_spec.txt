@@ -1,3 +1,14 @@
 
-set32: sets a register to a 32 bit number
+push rA: push rA onto the stack
 
+pop rA: the top entry of the stack into rA
+
+jmp LABEL: jump to LABEL
+
+mkl LABEL: create label LABEL
+
+func/endfunc FUNCTION: begin/end function declaration FUNCTION
+
+call FUNCTION: call function FUNCTION
+
+ret: return from current function
