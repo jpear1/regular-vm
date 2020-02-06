@@ -7,9 +7,6 @@
 
 void assemble(char const *inFileName, char const *outFileName);
 
-char getOpCode(char const *instruction);
-char identifyOpCode(char opCode);
-
 void processSetInstruction(char const *instruction, char const *opName, char *b1, char *b2, char *b3);
 void processTwoArgInstruction(char const *instruction, char const *opName, char *b1, char *b2, char *b3);
 void processThreeArgInstruction(char const *instruction, char const *opName, char *b1, char *b2, char *b3);

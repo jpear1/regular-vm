@@ -15,7 +15,7 @@ emu: emu.c emulator.c disassembler.c
 dsm: dsm.c disassembler.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-ass: ass.c assembler.c
+ass: ass.c assembler.c shared.c
 	$(CC) $(CFLAGS) -o $@ $^ 
 
 # THIS WILL NOT COMPILE WITH $(CFLAGS) BECAUSE IT IS BAD
