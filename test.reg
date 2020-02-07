@@ -1,9 +1,3 @@
-set r1 500
-set r2 -12
-add r3 r1 r2
-nop
-set r4 84
-sub r3 r3 r4
-set r10 10000
-stb r10 r4
-ldb r11 r10
+set r1 1
+set r2 2
+add r3 r1 r2+1

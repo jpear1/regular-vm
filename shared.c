@@ -1,5 +1,14 @@
 #include <string.h>
 
+#include "shared.h"
+
+char getArgcForOpCode(char opCode) {
+    char result = identifyOpCode(opCode);
+    if (result == 1)
+        result++;
+    return result;
+}
+
 char identifyOpCode(char opCode) {
     // nop
     if (opCode == 0x00)
@@ -28,7 +37,6 @@ char identifyOpCode(char opCode) {
         return 3;
     
 }
-
 
 char getOpCode(char const *instruction) {
     if (strcmp(instruction, "nop") == 0)

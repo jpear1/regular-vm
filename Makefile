@@ -18,7 +18,7 @@ dsm: dsm.c disassembler.c
 ass: ass.c assembler.c shared.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-rpp: rpp.c preprocessor.c
+rpp: rpp.c preprocessor.c shared.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 # THIS WILL NOT COMPILE WITH $(CFLAGS) BECAUSE IT IS BAD

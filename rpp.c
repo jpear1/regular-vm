@@ -16,9 +16,9 @@ int main(int argc, char **argv) {
         strcpy(outFileName, inFileName);
         char *period = strchr(outFileName, '.');
         if (period == NULL) {
-            strcpy(outFileName, "rpp.reg");
+            strcpy(outFileName, "rpp.a");
         } else {
-            strcpy(period+1, "reg");
+            strcpy(period+1, "a");
         }
     } else if (argc == 3) {
         strcpy(outFileName, argv[2]);

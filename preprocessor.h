@@ -2,7 +2,12 @@
 
 int preprocessRegFile(char const *inFileName, char const *outFileName);
 
-int doArithmeticPass(FILE *inFile, FILE *outFile);
+int doArithmeticPass(char *inString, char *outString);
+void insertArithmeticForArg(char *arg, char **writePtr);
+
+int doPushPopPass(FILE *inFile, FILE *outFile);
+
+void swapInOutStrings(char **inString, char **outString);
 
 int extractArgs(const char *line);
 
