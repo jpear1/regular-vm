@@ -9,7 +9,7 @@ test: all
 	./ass test.reg
 	./dsm test.out
 
-emu: emu.c emulator.c
+emu: emu.c emulator.c disassembler.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 dsm: dsm.c disassembler.c
