@@ -73,7 +73,7 @@ void insertArithmeticForArg(char *arg, char **writePtr) {
             *writePtr += sprintf(*writePtr, "add r%d r%d "MACRO1"\n", reg, reg);
     else
             *writePtr += sprintf(*writePtr, "sub r%d r%d "MACRO1"\n", reg, reg);
-    *index(arg, op) = '\0';
+    *strchr(arg, op) = '\0';
 }
 
 void swapInOutStrings(char **inString, char **outString) {
