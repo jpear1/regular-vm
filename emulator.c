@@ -5,23 +5,27 @@
 #include <inttypes.h>
 
 #include "emulator.h"
+#include "disassembler.h"
 
 #define PC registers[0]
 
-uint32_t registers[32] = {0};
+uint32_t registers[32];
 
-char memory[16384] = {0};
+char memory[0x100000];
+
+char executable[0x10000];
 
 // returns 1-indexed line number of invalid instruction if invalid opcode
 int runBinary(const char *instructions, size_t size) {
+    memcpy(executable, instructions, size);
     PC = 0;
     char op, b1, b2, b3;
     uint32_t tmp;
     while (PC < size) {
-        op = instructions[PC];
-        b1 = instructions[PC+1];
-        b2 = instructions[PC+2];
-        b3 = instructions[PC+3];
+        op = executable[PC];
+        b1 = executable[PC+1];
+        b2 = executable[PC+2];
+        b3 = executable[PC+3];
         switch (op) {
             // nop
             case 0x00: 
@@ -105,8 +109,8 @@ int runBinary(const char *instructions, size_t size) {
             default:
                 return PC/4+1;
         }
-        printState();
         PC += 4;
+        printState();
     }
     return 0;
 }
@@ -129,7 +133,6 @@ int runFile(char const *fileName) {
 }
 
 void printState() {
-    // TODO print out last instruction executed. Will have to restructure disassembler a bit.
     printf("----------------------------CURRENT STATE--------------------------\n");
     char valueString[50];
     const char spaces[] = "                ";
@@ -146,4 +149,11 @@ void printState() {
             printf("\n");
     }
     printf("\n");
+    printf("---------------------------------------------------------------------\n");
+    char nextInstrName[LONGEST_INSTRUCTION_LENGTH];
+    disassembleWord(&executable[PC], nextInstrName);
+    printf("Next Instruction: %s\n", nextInstrName);
+    printf("---------------------------------------------------------------------\n");
+    printf("Press anything to continue.\n\n");
+    getchar();
 }

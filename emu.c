@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv) {
     if (argc != 2) {
-        fprintf(stderr, "Usage: ./emulator <binary>");
+        fprintf(stderr, "Usage: ./emu <binary>");
         exit(-1);
     }
     return runFile(argv[1]);
