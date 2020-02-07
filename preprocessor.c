@@ -6,9 +6,10 @@
 #include "shared.h"
 
 #define PC "r31"
-#define FP "r30"
-#define MACRO1 "r29" // reserved for arithmetic macro
-#define MACRO2 "r28" // reserved for push and pop macros
+#define SP "r30"
+#define FP "r29"
+#define MACRO1 "r28" // reserved for arithmetic macro
+#define MACRO2 "r27" // reserved for push and pop macros
 
 int preprocessRegFile(char const *inFileName, char const *outFileName) {
     FILE *inFile = fopen(inFileName, "r");
@@ -42,7 +43,7 @@ int doArithmeticPass(char *inString, char *outString) {
     char *saveptr;
     for (char *line = strtok_r(inString, "\n", &saveptr); line != NULL; line = strtok_r(NULL, "\n", &saveptr)) {
         instruction = strtok(line, " ");
-        argc = getArgcForOpCode(getOpCode(instruction));
+        argc = getArgcForInstruction(instruction);
 
         for (int i = 0; i < sizeof(args)/sizeof(args[0]); i++) {
             args[i] = i >= argc ? NULL : strtok(NULL, " ");
@@ -92,20 +93,20 @@ int doPushPopPass(char *inString, char *outString) {
 
     for (char *line = strtok_r(inString, "\n", &saveptr); line != NULL; line = strtok_r(NULL, "\n", &saveptr)) {
         instruction = strtok(line, " ");
-        argc = getArgcForOpCode(getOpCode(instruction));
+        argc = getArgcForInstruction(instruction);
 
         for (int i = 0; i < sizeof(args)/sizeof(args[0]); i++) {
             args[i] = i >= argc ? NULL : strtok(NULL, " ");
         }
 
         if (strcmp(instruction, "push") == 0) {
+            writePtr += sprintf(writePtr, "stw "SP" %s \n", args[0]);
             writePtr += sprintf(writePtr, "set "MACRO2" 4\n");
-            writePtr += sprintf(writePtr, "add "FP" "MACRO2"\n");
-            writePtr += sprintf(writePtr, "stw "FP" r%s \n", args[0]);
+            writePtr += sprintf(writePtr, "add "SP" "SP" "MACRO2"\n");
         } else if (strcmp(instruction, "pop") == 0) {
-            writePtr += sprintf(writePtr, "ldw r%s "FP"\n", args[0]);
             writePtr += sprintf(writePtr, "set "MACRO2" 4\n");
-            writePtr += sprintf(writePtr, "sub "FP" "MACRO2"\n");
+            writePtr += sprintf(writePtr, "sub "SP" "SP" "MACRO2"\n");
+            writePtr += sprintf(writePtr, "ldw %s "SP"\n", args[0]);
         } else {
             writePtr += sprintf(writePtr, "%s", instruction);
             for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
@@ -113,5 +114,6 @@ int doPushPopPass(char *inString, char *outString) {
             }
             writePtr += sprintf(writePtr, "\n");
         }
+        args[0] = args[1] = args[2] = 0;
     }
 }

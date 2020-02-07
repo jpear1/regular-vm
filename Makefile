@@ -9,6 +9,8 @@ test: all
 	./rpp test.reg
 	./ass test.a
 	./dsm test.out
+
+runTest: test
 	./emu test.out
 
 emu: emu.c emulator.c disassembler.c

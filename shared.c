@@ -2,6 +2,15 @@
 
 #include "shared.h"
 
+char getArgcForInstruction(const char *instruction) {
+    if (getArgcForOpCode(getOpCode(instruction)) != -1)
+        return getArgcForOpCode(getOpCode(instruction));
+    if (strcmp(instruction, "push") == 0)
+        return 1;
+    if (strcmp(instruction, "pop") == 0)
+        return 1;
+}
+
 char getArgcForOpCode(char opCode) {
     char result = identifyOpCode(opCode);
     if (result == 1)
