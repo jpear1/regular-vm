@@ -1,3 +1,4 @@
 set r1 1
 set r2 2
 add r3 r1 r2+1
+push r1

@@ -3,11 +3,13 @@ CFLAGS= -g -fsanitize=address -fsanitize=undefined
 
 BINARIES= interactiveCalc emu ass dsm rpp
 
-all: dsm ass emulator
+all: dsm ass emu rpp
 
 test: all
-	./ass test.reg
+	./rpp test.reg
+	./ass test.a
 	./dsm test.out
+	./emu test.out
 
 emu: emu.c emulator.c disassembler.c
 	$(CC) $(CFLAGS) -o $@ $^
