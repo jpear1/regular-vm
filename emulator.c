@@ -92,19 +92,19 @@ int runBinary(const char *instructions, size_t size) {
                 break;
             // ldw rA rB
             case 0x0D:
-                memcpy(&registers[b1], &memory[b2], 4);
+                memcpy(&registers[b1], &memory[registers[b2]], 4);
                 break;
             // stw rA rB
             case 0x0E:
-                memcpy(&memory[b1], &registers[b2], 4);
+                memcpy(&memory[registers[b1]], &registers[b2], 4);
                 break;
             // ldb rA rB
             case 0x0F:
-                memcpy(&registers[b1], &memory[b2], 1);
+                memcpy(&registers[b1], &memory[registers[b2]], 1);
                 break;
             // stb rA rB
             case 0x10:
-                memcpy(&memory[b1], &registers[b2], 1);
+                memcpy(&memory[registers[b1]], &registers[b2], 1);
                 break;
             default:
                 return PC/4+1;
@@ -150,7 +150,7 @@ void printState() {
     }
     printf("\n");
     printf("---------------------------------------------------------------------\n");
-    char nextInstrName[LONGEST_INSTRUCTION_LENGTH];
+    char nextInstrName[LONGEST_INSTRUCTION_LENGTH+1]; // +1 for null byte
     disassembleWord(&executable[PC], nextInstrName);
     printf("Next Instruction: %s\n", nextInstrName);
     printf("---------------------------------------------------------------------\n");
