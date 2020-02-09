@@ -28,7 +28,9 @@ int preprocessRegFile(char const *inFileName, char const *outFileName) {
     refreshInOutStrings(&inString, &outString);
     doPushPopPass(inString, outString);
 
-    fwrite(outString, strlen(outString), 1, outFile);
+    fputs(outString, outFile);
+    free(outString);
+    free(inString);
     fclose(inFile);
     fclose(outFile);
 }
