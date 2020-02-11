@@ -21,11 +21,11 @@ int runBinary(const char *instructions, size_t size) {
     PC = 0;
     char op, b1, b2, b3;
     uint32_t tmp;
-    while (PC < size) {
-        op = executable[PC];
-        b1 = executable[PC+1];
-        b2 = executable[PC+2];
-        b3 = executable[PC+3];
+    while (PC < size/4) {
+        op = executable[4*PC];
+        b1 = executable[4*PC+1];
+        b2 = executable[4*PC+2];
+        b3 = executable[4*PC+3];
         switch (op) {
             // nop
             case 0x00: 
@@ -107,9 +107,9 @@ int runBinary(const char *instructions, size_t size) {
                 memcpy(&memory[registers[b1]], &registers[b2], 1);
                 break;
             default:
-                return PC/4+1;
+                return PC;
         }
-        PC += 4;
+        PC++;
         printState();
     }
     return 0;
@@ -151,7 +151,7 @@ void printState() {
     printf("\n");
     printf("---------------------------------------------------------------------\n");
     char nextInstrName[LONGEST_INSTRUCTION_LENGTH+1]; // +1 for null byte
-    disassembleWord(&executable[PC], nextInstrName);
+    disassembleWord(&executable[PC*4], nextInstrName);
     printf("Next Instruction: %s\n", nextInstrName);
     printf("---------------------------------------------------------------------\n");
     printf("Press anything to continue.\n\n");

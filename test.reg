@@ -1,4 +1,6 @@
 set r1 1
 set r2 2
-add r3 r1 r2+1
-push r1
+jmp foo
+set r2 3
+lab foo
+set r1 2

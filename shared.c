@@ -9,6 +9,10 @@ char getArgcForInstruction(const char *instruction) {
         return 1;
     if (strcmp(instruction, "pop") == 0)
         return 1;
+    if (strcmp(instruction, "lab") == 0)
+        return 1;
+    if (strcmp(instruction, "jmp") == 0)
+        return 1;
 }
 
 char getArgcForOpCode(char opCode) {

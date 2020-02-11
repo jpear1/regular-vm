@@ -5,7 +5,7 @@ pop rA: the top entry of the stack into rA
 
 jmp LABEL: jump to LABEL
 
-mkl LABEL: create label LABEL
+lab LABEL: create label LABEL
 
 func/endfunc FUNCTION: begin/end function declaration FUNCTION
 

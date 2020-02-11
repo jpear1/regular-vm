@@ -24,4 +24,6 @@ int main(int argc, char **argv) {
         strcpy(outFileName, argv[2]);
     }
     preprocessRegFile(inFileName, outFileName);
+    // malloc(50);
+
 }

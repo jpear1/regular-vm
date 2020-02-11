@@ -1,15 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <gdbm.h>
 
 #include "preprocessor.h"
 #include "shared.h"
 
-#define PC "r31"
-#define SP "r30"
-#define FP "r29"
-#define MACRO1 "r28" // reserved for arithmetic macro
-#define MACRO2 "r27" // reserved for push and pop macros
+#define PC "r0"
+#define SP "r31"
+#define FP "r30"
+#define MACRO1 "r29" // reserved for arithmetic macro
+#define MACRO2 "r28" // reserved for push and pop macros
+#define ST_NAME "symbolTable.db"
+
+GDBM_FILE symbolTable;
 
 int preprocessRegFile(char const *inFileName, char const *outFileName) {
     FILE *inFile = fopen(inFileName, "r");
@@ -27,12 +32,17 @@ int preprocessRegFile(char const *inFileName, char const *outFileName) {
     doArithmeticPass(inString, outString);
     refreshInOutStrings(&inString, &outString);
     doPushPopPass(inString, outString);
+    refreshInOutStrings(&inString, &outString);
+    doArithmeticPass(inString, outString);
+    refreshInOutStrings(&inString, &outString);
+    doLabelPass(&inString, &outString);
 
     fputs(outString, outFile);
     free(outString);
     free(inString);
     fclose(inFile);
     fclose(outFile);
+    return 0;
 }
 
 // only supports one arithmetic macro per line
@@ -84,7 +94,8 @@ void insertArithmeticForArg(char *arg, char **writePtr) {
 void refreshInOutStrings(char **inString, char **outString) {
     free(*inString);
     *inString = *outString;
-    *outString = malloc(4 * strlen(*inString));
+    int len = strlen(*inString); 
+    *outString = malloc(4 * len);
 }
 
 int doPushPopPass(char *inString, char *outString) {
@@ -115,6 +126,98 @@ int doPushPopPass(char *inString, char *outString) {
                 writePtr += sprintf(writePtr, " %s", args[i]);
             }
             writePtr += sprintf(writePtr, "\n");
+        }
+        args[0] = args[1] = args[2] = 0;
+    }
+}
+
+void dbOpenError() {
+    printf("error opening database\n");
+    exit(1);
+}
+
+int doLabelPass(char **inString, char **outString) {
+    if (access(ST_NAME, F_OK) != -1)
+        remove(ST_NAME);
+    symbolTable = gdbm_open(ST_NAME, 0, GDBM_WRCREAT, 0, dbOpenError);
+    if (!symbolTable)
+        dbOpenError();
+    populateSymbolTable(*inString, *outString);
+    refreshInOutStrings(inString, outString);
+    substituteSymbols(*inString, *outString);
+    gdbm_close(symbolTable);
+    remove(ST_NAME);
+}
+
+int populateSymbolTable(char *inString, char *outString) {
+    char *instruction, *saveptr;
+    char *writePtr = outString;
+    char *args[3] = {0};
+    int len = strlen(inString), argc, lineNum = 0;
+
+    for (char *line = strtok_r(inString, "\n", &saveptr); line != NULL; line = strtok_r(NULL, "\n", &saveptr)) {
+        instruction = strtok(line, " ");
+        argc = getArgcForInstruction(instruction);
+
+        for (int i = 0; i < sizeof(args)/sizeof(args[0]); i++) {
+            args[i] = i >= argc ? NULL : strtok(NULL, " ");
+        }
+
+        if (strcmp(instruction, "lab") == 0) {
+            datum key = {args[0], strlen(args[0])};
+            int labelVal = lineNum - 1;
+            datum entry = {(char *)&lineNum, sizeof(lineNum)};
+            int didCollide = gdbm_store(symbolTable, key, entry, GDBM_INSERT);
+            if (didCollide) {
+                printf("duplicate symbol: %s\n", args[0]);
+                exit(1);
+            }
+        } else {
+            writePtr += sprintf(writePtr, "%s", instruction);
+            for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
+                writePtr += sprintf(writePtr, " %s", args[i]);
+            }
+            writePtr += sprintf(writePtr, "\n");
+            lineNum++;
+        }
+        args[0] = args[1] = args[2] = 0;
+    }
+}
+int substituteSymbols(char *inString, char *outString) {
+    char *instruction, *saveptr;
+    char *writePtr = outString;
+    char *args[3] = {0};
+    int len = strlen(inString), argc, lineNum = 0;
+
+    for (char *line = strtok_r(inString, "\n", &saveptr); line != NULL; line = strtok_r(NULL, "\n", &saveptr)) {
+        instruction = strtok(line, " ");
+        argc = getArgcForInstruction(instruction);
+
+        for (int i = 0; i < sizeof(args)/sizeof(args[0]); i++) {
+            args[i] = i >= argc ? NULL : strtok(NULL, " ");
+        }
+
+        int recreateInstruction = 1;
+
+        if (strcmp(instruction, "jmp") == 0) {
+            if (atoi(args[0]) == 0) {
+                recreateInstruction = 0;
+                datum key = {args[0], strlen(args[0])};
+                datum entry = gdbm_fetch(symbolTable, key);
+                if (entry.dptr == NULL) {
+                    exit(-1);
+                }
+                writePtr += sprintf(writePtr, "set "PC" %d\n",  * (int *)entry.dptr);
+                free(entry.dptr);
+            }
+        } 
+        if (recreateInstruction) {
+            writePtr += sprintf(writePtr, "%s", instruction);
+            for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
+                writePtr += sprintf(writePtr, " %s", args[i]);
+            }
+            writePtr += sprintf(writePtr, "\n");
+            lineNum++;
         }
         args[0] = args[1] = args[2] = 0;
     }
