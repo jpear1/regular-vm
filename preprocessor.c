@@ -120,7 +120,7 @@ void refreshInOutStrings(char **inString, char **outString) {
     free(*inString);
     *inString = *outString;
     int len = strlen(*inString); 
-    *outString = malloc(4 * len);
+    *outString = malloc(10 * len);
 }
 
 int doPushPopPass(char *inString, char *outString) {
@@ -267,6 +267,7 @@ int doFunctionDefPass(char *inString, char *outString) {
         if (strcmp(instruction, "func") == 0) {
             writePtr += sprintf(writePtr, "jmp func_%s_end\n", args[0]);
             writePtr += sprintf(writePtr, "lab func_%s_start\n", args[0]);
+            writePtr += sprintf(writePtr, "mov "FP" "SP"\n");
             identifySpilledRegisters(saveptr, spilledRegisters);
             for (int i = 0; i < 32; i++) {
                 if (spilledRegisters[i] && i != 29) // r29 is RETVAL register
@@ -343,7 +344,7 @@ int doFunctionCallPass(char *inString, char *outString) {
 
         if (strcmp(instruction, "call") == 0) {
             writePtr += sprintf(writePtr, "mov "MACRO1" "PC"\n");
-            writePtr += sprintf(writePtr, "set "MACRO3" 9\n"); // 9 is the length of a fully expanded call function
+            writePtr += sprintf(writePtr, "set "MACRO3" 10\n"); // 10 is the length of a fully expanded call function
             writePtr += sprintf(writePtr, "add "MACRO3" "MACRO3" "MACRO1"\n");
             writePtr += sprintf(writePtr, "push "MACRO3"\n");
             writePtr += sprintf(writePtr, "push "FP"\n");
@@ -377,6 +378,8 @@ int doJzPass(char *inString, char *outString) {
         if (strcmp(instruction, "jz") == 0) {
             writePtr += sprintf(writePtr, "set "MACRO1" 0\n");
             writePtr += sprintf(writePtr, "tcu "MACRO1" %s "MACRO1"\n", args[0]);
+            writePtr += sprintf(writePtr, "set "MACRO2" 1\n");
+            writePtr += sprintf(writePtr, "and "MACRO1" "MACRO2" "MACRO1"\n");
             writePtr += sprintf(writePtr, "add "PC" "PC" "MACRO1"\n");
             writePtr += sprintf(writePtr, "jmp %s\n", args[1]);
         } else {

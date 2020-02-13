@@ -120,8 +120,9 @@ int runBinary(const char *instructions, size_t size) {
                 return PC;
         }
         PC++;
-        printState();
+        // printState();
     }
+    printState();
     return 0;
 }
 
