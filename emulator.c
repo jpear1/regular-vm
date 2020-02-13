@@ -73,12 +73,22 @@ int runBinary(const char *instructions, size_t size) {
             // tcu rA rB rC
             case 0x09:
                 tmp = registers[b2] - registers[b3];
-                registers[b1] = tmp > registers[b2] ? UINT32_MAX : 0;
+                if (tmp < registers[b2])
+                    registers[b1] = 1;
+                else if (tmp == 0)
+                    registers[b1] = 0;
+                else
+                    registers[b1] = -1;
                 break;
             // tcs rA rB rC
             case 0x0A:
                 tmp = (int32_t) registers[b2] - (int32_t) registers[b3];
-                registers[b1] = tmp & 0x80000000 ? UINT32_MAX : 0; // 
+                if (tmp > 0)
+                    registers[b1] = 1;
+                else if (tmp == 0)
+                    registers[b1] = 0;
+                else
+                    registers[b1] = -1;
                 break;
             // set rA imm
             case 0x0B:

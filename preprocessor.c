@@ -10,8 +10,10 @@
 #define PC "r0"
 #define SP "r31"
 #define FP "r30"
-#define MACRO1 "r29" // reserved for arithmetic macro
-#define MACRO2 "r28" // reserved for push and pop macros
+#define RETVAL "r29"
+#define MACRO1 "r28" // used by push, pop, 
+#define MACRO2 "r27" // used by arithmetic
+#define MACRO3 "r26" // used by function call
 #define ST_NAME "symbolTable.db"
 
 GDBM_FILE symbolTable;
@@ -29,6 +31,12 @@ int preprocessRegFile(char const *inFileName, char const *outFileName) {
     fread(inString, fileSize, 1, inFile);
     inString[fileSize] = '\0';
 
+    doJzPass(inString, outString);
+    refreshInOutStrings(&inString, &outString);
+    doFunctionDefPass(inString, outString);
+    refreshInOutStrings(&inString, &outString);
+    doFunctionCallPass(inString, outString);
+    refreshInOutStrings(&inString, &outString);
     doArithmeticPass(inString, outString);
     refreshInOutStrings(&inString, &outString);
     doPushPopPass(inString, outString);
@@ -61,21 +69,38 @@ int doArithmeticPass(char *inString, char *outString) {
             args[i] = i >= argc ? NULL : strtok(NULL, " ");
         }
 
+        int willGenerateInstruction = 1;
         for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
-            if (index(args[i], '+') || index(args[i], '-')) {
+            char* pIndex = index(args[i], '+');
+            char* mIndex = index(args[i], '-');
+            if (pIndex || mIndex) {
+                willGenerateInstruction = 0;
                 insertArithmeticForArg(args[i], &writePtr);
+                if (pIndex)
+                    writePtr += sprintf(writePtr, "add");
+                else
+                    writePtr += sprintf(writePtr, "sub");
+                for (int j = 0; j < i; j++) {
+                    writePtr += sprintf(writePtr, " %s", args[j]);
+                }
+                writePtr += sprintf(writePtr, " "MACRO2);
+                for (int j = i+1; j < sizeof(args)/sizeof(args[0]) && args[j]; j++) {
+                    writePtr += sprintf(writePtr, " %s", args[j]);
+                }
+                writePtr += sprintf(writePtr, "\n");
                 break;
             }
         }
-
-        writePtr += sprintf(writePtr, "%s", instruction);
-        int isNewline = 0;
-        for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
-            writePtr += sprintf(writePtr, " %s", args[i]);
-            isNewline = isNewline || index(args[i], '\n');
+        if (willGenerateInstruction) {
+            writePtr += sprintf(writePtr, "%s", instruction);
+            int isNewline = 0;
+            for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
+                writePtr += sprintf(writePtr, " %s", args[i]);
+                isNewline = isNewline || index(args[i], '\n');
+            }
+            if (!isNewline)
+                writePtr += sprintf(writePtr, "\n");
         }
-        if (!isNewline)
-            writePtr += sprintf(writePtr, "\n");
     }
 }
 
@@ -85,9 +110,9 @@ void insertArithmeticForArg(char *arg, char **writePtr) {
     sscanf(arg, "r%d%c%d", &reg, &op, &num);
     *writePtr += sprintf(*writePtr, "set "MACRO1" %d\n", num);
     if (op == '+')
-            *writePtr += sprintf(*writePtr, "add r%d r%d "MACRO1"\n", reg, reg);
+            *writePtr += sprintf(*writePtr, "add "MACRO2" r%d "MACRO1"\n", reg);
     else
-            *writePtr += sprintf(*writePtr, "sub r%d r%d "MACRO1"\n", reg, reg);
+            *writePtr += sprintf(*writePtr, "sub "MACRO2" r%d "MACRO1"\n", reg);
     *strchr(arg, op) = '\0';
 }
 
@@ -183,6 +208,7 @@ int populateSymbolTable(char *inString, char *outString) {
         args[0] = args[1] = args[2] = 0;
     }
 }
+
 int substituteSymbols(char *inString, char *outString) {
     char *instruction, *saveptr;
     char *writePtr = outString;
@@ -207,11 +233,153 @@ int substituteSymbols(char *inString, char *outString) {
                 if (entry.dptr == NULL) {
                     exit(-1);
                 }
-                writePtr += sprintf(writePtr, "set "PC" %d\n",  * (int *)entry.dptr);
+                writePtr += sprintf(writePtr, "set "PC" %d\n",  (*(int *)entry.dptr)-1); // subtract one because the pc will automatically increment
                 free(entry.dptr);
             }
         } 
         if (recreateInstruction) {
+            writePtr += sprintf(writePtr, "%s", instruction);
+            for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
+                writePtr += sprintf(writePtr, " %s", args[i]);
+            }
+            writePtr += sprintf(writePtr, "\n");
+            lineNum++;
+        }
+        args[0] = args[1] = args[2] = 0;
+    }
+}
+
+int doFunctionDefPass(char *inString, char *outString) {
+    char *instruction, *saveptr;
+    char *writePtr = outString;
+    char *args[3] = {0};
+    char spilledRegisters[32];
+    int len = strlen(inString), argc, lineNum = 0;
+
+    for (char *line = strtok_r(inString, "\n", &saveptr); line != NULL; line = strtok_r(NULL, "\n", &saveptr)) {
+        instruction = strtok(line, " ");
+        argc = getArgcForInstruction(instruction);
+
+        for (int i = 0; i < sizeof(args)/sizeof(args[0]); i++) {
+            args[i] = i >= argc ? NULL : strtok(NULL, " ");
+        }
+
+        if (strcmp(instruction, "func") == 0) {
+            writePtr += sprintf(writePtr, "jmp func_%s_end\n", args[0]);
+            writePtr += sprintf(writePtr, "lab func_%s_start\n", args[0]);
+            identifySpilledRegisters(saveptr, spilledRegisters);
+            for (int i = 0; i < 32; i++) {
+                if (spilledRegisters[i] && i != 29) // r29 is RETVAL register
+                    writePtr += sprintf(writePtr, "push r%i\n", i);
+            }
+        } else if (strcmp(instruction, "endfunc") == 0) {
+            writePtr += sprintf(writePtr, "lab func_%s_exit\n", args[0]);
+            for (int i = 31; i >= 0; i--) {
+                if (spilledRegisters[i] && i != 29) // r29 is RETVAL register
+                    writePtr += sprintf(writePtr, "pop r%i\n", i);
+            }
+            writePtr += sprintf(writePtr, "pop "FP"\n");
+            writePtr += sprintf(writePtr, "pop "PC"\n");
+            writePtr += sprintf(writePtr, "lab func_%s_end\n", args[0]);
+        } else if (strcmp(instruction, "ret") == 0) {
+            writePtr += sprintf(writePtr, "jmp func_%s_exit\n", args[0]);
+        } else {
+            writePtr += sprintf(writePtr, "%s", instruction);
+            for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
+                writePtr += sprintf(writePtr, " %s", args[i]);
+            }
+            writePtr += sprintf(writePtr, "\n");
+            lineNum++;
+        }
+        args[0] = args[1] = args[2] = 0;
+    }
+}
+
+int identifySpilledRegisters(const char *start, char *spilledRegisters) {
+    memset(spilledRegisters, 0, 32);
+    char *instruction, *saveptr;
+    char *args[3] = {0};
+    size_t len = strlen(start) + 1;
+    char *code = malloc(len);
+    memcpy(code, start, len);
+    for (char *line = strtok_r(code, "\n", &saveptr); line != NULL; line = strtok_r(NULL, "\n", &saveptr)) {
+        instruction = strtok(line, " ");
+        int argc = getArgcForInstruction(instruction);
+
+        for (int i = 0; i < sizeof(args)/sizeof(args[0]); i++) {
+            args[i] = i >= argc ? NULL : strtok(NULL, " ");
+        }
+
+        if (strcmp(instruction, "endfunc") == 0) {
+            free(code);
+            return 0;
+        }
+
+        int reg;
+        if (args[0]) {
+            int isRegister = sscanf(args[0], "r%i", &reg);
+            if (isRegister)
+                spilledRegisters[reg] = 1;
+        }
+    }
+    printf("unclosed function definition\n");
+    exit(-1);
+}
+
+int doFunctionCallPass(char *inString, char *outString) {
+    char *instruction, *saveptr;
+    char *writePtr = outString;
+    char *args[3] = {0};
+    char spilledRegisters[32];
+    int len = strlen(inString), argc, lineNum = 0;
+
+    for (char *line = strtok_r(inString, "\n", &saveptr); line != NULL; line = strtok_r(NULL, "\n", &saveptr)) {
+        instruction = strtok(line, " ");
+        argc = getArgcForInstruction(instruction);
+
+        for (int i = 0; i < sizeof(args)/sizeof(args[0]); i++) {
+            args[i] = i >= argc ? NULL : strtok(NULL, " ");
+        }
+
+        if (strcmp(instruction, "call") == 0) {
+            writePtr += sprintf(writePtr, "mov "MACRO1" "PC"\n");
+            writePtr += sprintf(writePtr, "set "MACRO3" 9\n"); // 9 is the length of a fully expanded call function
+            writePtr += sprintf(writePtr, "add "MACRO3" "MACRO3" "MACRO1"\n");
+            writePtr += sprintf(writePtr, "push "MACRO3"\n");
+            writePtr += sprintf(writePtr, "push "FP"\n");
+            writePtr += sprintf(writePtr, "jmp func_%s_start\n", args[0]);
+        } else {
+            writePtr += sprintf(writePtr, "%s", instruction);
+            for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
+                writePtr += sprintf(writePtr, " %s", args[i]);
+            }
+            writePtr += sprintf(writePtr, "\n");
+            lineNum++;
+        }
+        args[0] = args[1] = args[2] = 0;
+    }
+}
+
+int doJzPass(char *inString, char *outString) {
+    char *instruction, *saveptr;
+    char *writePtr = outString;
+    char *args[3] = {0};
+    int len = strlen(inString), argc, lineNum = 0;
+
+    for (char *line = strtok_r(inString, "\n", &saveptr); line != NULL; line = strtok_r(NULL, "\n", &saveptr)) {
+        instruction = strtok(line, " ");
+        argc = getArgcForInstruction(instruction);
+
+        for (int i = 0; i < sizeof(args)/sizeof(args[0]); i++) {
+            args[i] = i >= argc ? NULL : strtok(NULL, " ");
+        }
+
+        if (strcmp(instruction, "jz") == 0) {
+            writePtr += sprintf(writePtr, "set "MACRO1" 0\n");
+            writePtr += sprintf(writePtr, "tcu "MACRO1" %s "MACRO1"\n", args[0]);
+            writePtr += sprintf(writePtr, "add "PC" "PC" "MACRO1"\n");
+            writePtr += sprintf(writePtr, "jmp %s\n", args[1]);
+        } else {
             writePtr += sprintf(writePtr, "%s", instruction);
             for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
                 writePtr += sprintf(writePtr, " %s", args[i]);

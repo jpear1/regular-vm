@@ -1,6 +1,6 @@
 set r1 1
-set r2 2
-jmp foo
-set r2 3
+jz r1 foo
+add r1 r1 r1
+add r1 r1 r1
+add r1 r1 r1
 lab foo
-set r1 2

@@ -14,3 +14,5 @@ call FUNCTION: call function FUNCTION
 ret: return from current function
 
 reserved registers: r31 (sp), r30 (fp), r29 (macro1), r28 (macro2)
+
+jz rA LABEL: jump to label LABEL if rA is zero

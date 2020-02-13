@@ -5,14 +5,17 @@
 char getArgcForInstruction(const char *instruction) {
     if (getArgcForOpCode(getOpCode(instruction)) != -1)
         return getArgcForOpCode(getOpCode(instruction));
-    if (strcmp(instruction, "push") == 0)
+    if ((strcmp(instruction, "push") == 0) ||
+        (strcmp(instruction, "pop") == 0) ||
+        (strcmp(instruction, "lab") == 0) ||
+        (strcmp(instruction, "jmp") == 0) ||
+        (strcmp(instruction, "func") == 0) ||
+        (strcmp(instruction, "endfunc") == 0) ||
+        (strcmp(instruction, "reg") == 0) ||
+        (strcmp(instruction, "call") == 0))
         return 1;
-    if (strcmp(instruction, "pop") == 0)
-        return 1;
-    if (strcmp(instruction, "lab") == 0)
-        return 1;
-    if (strcmp(instruction, "jmp") == 0)
-        return 1;
+    if (strcmp(instruction, "jz") == 0)
+        return 2;
 }
 
 char getArgcForOpCode(char opCode) {
