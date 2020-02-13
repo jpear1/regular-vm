@@ -1,0 +1,30 @@
+func fibb
+set r1 12
+sub r2 r30 r1
+ldw r3 r2
+jz r3 fibb_iszero
+set r1 1
+sub r3 r3 r1
+jz r3 fibb_isone
+push r3
+call fibb
+pop r3
+mov r4 r29
+sub r3 r3 r1
+push r3
+call fibb
+pop r3
+mov r5 r29
+add r29 r4 r5
+ret fibb
+lab fibb_iszero
+set r29 1
+ret fibb
+lab fibb_isone
+set r29 1
+ret fibb
+endfunc fibb
+set r1 6
+push r1
+call fibb
+pop r1

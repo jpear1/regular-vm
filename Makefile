@@ -12,6 +12,13 @@ test: all
 	./rpp test.reg
 	./ass test.a
 	./dsm test.out
+	./emu test.out
+
+fibb: all
+	./rpp fibb.reg
+	./ass fibb.a
+	./dsm fibb.out
+	./emu fibb.out
 
 runTest: test
 	./emu test.out

@@ -7,3 +7,6 @@ rpp
 test.dsm
 test.out
 test.a
+fibb.dsm
+fibb.out
+fibb.a
