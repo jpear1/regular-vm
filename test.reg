@@ -1,9 +1,6 @@
-set r1 500
-set r2 -12
-add r3 r1 r2
-nop
-set r4 84
-sub r3 r3 r4
-set r10 10000
-stb r10 r4
-ldb r11 r10
+set r1 1
+jz r1 foo
+add r1 r1 r1
+add r1 r1 r1
+add r1 r1 r1
+lab foo

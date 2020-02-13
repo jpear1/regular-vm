@@ -21,11 +21,11 @@ int runBinary(const char *instructions, size_t size) {
     PC = 0;
     char op, b1, b2, b3;
     uint32_t tmp;
-    while (PC < size) {
-        op = executable[PC];
-        b1 = executable[PC+1];
-        b2 = executable[PC+2];
-        b3 = executable[PC+3];
+    while (PC < size/4) {
+        op = executable[4*PC];
+        b1 = executable[4*PC+1];
+        b2 = executable[4*PC+2];
+        b3 = executable[4*PC+3];
         switch (op) {
             // nop
             case 0x00: 
@@ -73,12 +73,22 @@ int runBinary(const char *instructions, size_t size) {
             // tcu rA rB rC
             case 0x09:
                 tmp = registers[b2] - registers[b3];
-                registers[b1] = tmp > registers[b2] ? UINT32_MAX : 0;
+                if (tmp < registers[b2])
+                    registers[b1] = 1;
+                else if (tmp == 0)
+                    registers[b1] = 0;
+                else
+                    registers[b1] = -1;
                 break;
             // tcs rA rB rC
             case 0x0A:
                 tmp = (int32_t) registers[b2] - (int32_t) registers[b3];
-                registers[b1] = tmp & 0x80000000 ? UINT32_MAX : 0; // 
+                if (tmp > 0)
+                    registers[b1] = 1;
+                else if (tmp == 0)
+                    registers[b1] = 0;
+                else
+                    registers[b1] = -1;
                 break;
             // set rA imm
             case 0x0B:
@@ -92,26 +102,27 @@ int runBinary(const char *instructions, size_t size) {
                 break;
             // ldw rA rB
             case 0x0D:
-                memcpy(&registers[b1], &memory[b2], 4);
+                memcpy(&registers[b1], &memory[registers[b2]], 4);
                 break;
             // stw rA rB
             case 0x0E:
-                memcpy(&memory[b1], &registers[b2], 4);
+                memcpy(&memory[registers[b1]], &registers[b2], 4);
                 break;
             // ldb rA rB
             case 0x0F:
-                memcpy(&registers[b1], &memory[b2], 1);
+                memcpy(&registers[b1], &memory[registers[b2]], 1);
                 break;
             // stb rA rB
             case 0x10:
-                memcpy(&memory[b1], &registers[b2], 1);
+                memcpy(&memory[registers[b1]], &registers[b2], 1);
                 break;
             default:
-                return PC/4+1;
+                return PC;
         }
-        PC += 4;
-        printState();
+        PC++;
+        // printState();
     }
+    printState();
     return 0;
 }
 
@@ -150,8 +161,8 @@ void printState() {
     }
     printf("\n");
     printf("---------------------------------------------------------------------\n");
-    char nextInstrName[LONGEST_INSTRUCTION_LENGTH];
-    disassembleWord(&executable[PC], nextInstrName);
+    char nextInstrName[LONGEST_INSTRUCTION_LENGTH+1]; // +1 for null byte
+    disassembleWord(&executable[PC*4], nextInstrName);
     printf("Next Instruction: %s\n", nextInstrName);
     printf("---------------------------------------------------------------------\n");
     printf("Press anything to continue.\n\n");
