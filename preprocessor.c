@@ -14,7 +14,9 @@
 #define MACRO1 "r28" // used by push, pop, 
 #define MACRO2 "r27" // used by arithmetic
 #define MACRO3 "r26" // used by function call
+
 #define ST_NAME "symbolTable.db"
+#define PASS_ARITHMETIC 0x0001
 
 GDBM_FILE symbolTable;
 
@@ -52,6 +54,63 @@ int preprocessRegFile(char const *inFileName, char const *outFileName) {
     fclose(outFile);
     return 0;
 }
+
+int doPass(char *inString, char *outString, int flags) {
+    char *instruction, *savePtr, *writePtr = outString;
+    char *args[3] = {0};
+    int argc, lineNum, len = strlen(inString);
+
+    for (char *line = strtok_r(inString, "\n", &savePtr); line != NULL; line = strtok_r(NULL, "\n", &savePtr)) {
+        instruction = strtok(line, " ");
+        argc = getArgcForInstruction(instruction);
+
+        for (int i = 0; i < sizeof(args)/sizeof(args[0]); i++) {
+            args[i] = i >= argc ? NULL : strtok(NULL, " ");
+        }
+
+        char *instruction, *savePtr, *writePtr = outString;
+        char *args[3] = {0};
+        int argc, len = strlen(inString);
+        int substitutedInstruction = 1;
+        for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
+            if (flags & PASS_ARITHMETIC)
+                substitutedInstruction |= doArithSubForInstruction(instruction, args, &savePtr, &writePtr);
+        }
+        if (!substitutedInstruction) {
+            writePtr += sprintf(writePtr, "%s", instruction);
+            int isNewline = 0;
+            for (int i = 0; i < sizeof(args)/sizeof(args[0]) && args[i] != NULL; i++) {
+                writePtr += sprintf(writePtr, " %s", args[i]);
+                isNewline = isNewline || index(args[i], '\n');
+            }
+            if (!isNewline)
+                writePtr += sprintf(writePtr, "\n");
+        }
+    }
+}
+
+int doArithSubForInstruction(char *instruction, char **args, char **savePtr, char **writePtr) {
+    char* pIndex = index((*args)[i], '+');
+    char* mIndex = index(args[i], '-');
+    if (pIndex || mIndex) {
+        willGenerateInstruction = 0;
+        insertArithmeticForArg(args[i], &writePtr);
+        if (pIndex)
+            writePtr += sprintf(writePtr, "add");
+        else
+            writePtr += sprintf(writePtr, "sub");
+        for (int j = 0; j < i; j++) {
+            writePtr += sprintf(writePtr, " %s", args[j]);
+        }
+        writePtr += sprintf(writePtr, " "MACRO2);
+        for (int j = i+1; j < sizeof(args)/sizeof(args[0]) && args[j]; j++) {
+            writePtr += sprintf(writePtr, " %s", args[j]);
+        }
+        writePtr += sprintf(writePtr, "\n");
+        break;
+
+}
+    
 
 // only supports one arithmetic macro per line
 int doArithmeticPass(char *inString, char *outString) {
