@@ -270,7 +270,7 @@ int doFunctionDefPass(char *inString, char *outString) {
             writePtr += sprintf(writePtr, "mov "FP" "SP"\n");
             identifySpilledRegisters(saveptr, spilledRegisters);
             for (int i = 0; i < 32; i++) {
-                if (spilledRegisters[i] && i != 29) // r29 is RETVAL register
+                if (spilledRegisters[i])
                     writePtr += sprintf(writePtr, "push r%i\n", i);
             }
         } else if (strcmp(instruction, "endfunc") == 0) {
@@ -319,7 +319,7 @@ int identifySpilledRegisters(const char *start, char *spilledRegisters) {
         int reg;
         if (args[0]) {
             int isRegister = sscanf(args[0], "r%i", &reg);
-            if (isRegister)
+            if (isRegister && reg != 29 && reg != 0) // r29 is RETVAL and r0 is PC
                 spilledRegisters[reg] = 1;
         }
     }
